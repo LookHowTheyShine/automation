@@ -1,0 +1,17 @@
+name: refresh-instagram-token
+on:
+  schedule:
+    - cron: "0 3 1,15 * *"        # twice a month; tokens last ~60 days
+  workflow_dispatch:
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          NEW=$(curl -sf "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=$IG_TOKEN" | jq -r .access_token)
+          [ -n "$NEW" ] && [ "$NEW" != "null" ]
+          echo "::add-mask::$NEW"
+          gh secret set IG_TOKEN --repo "$GITHUB_REPOSITORY" --body "$NEW"
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
